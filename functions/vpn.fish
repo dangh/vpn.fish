@@ -1,6 +1,11 @@
 function vpn -a action name
   set -l args $argv
 
+  if test -z "$argv" && test (count ~/.config/vpn/*/) -eq 1
+    set -l name (path basename ~/.config/vpn/*/)
+    vpn connect $name -v
+  end
+
   test -n "$action" || begin
     echo action is required
     return 1

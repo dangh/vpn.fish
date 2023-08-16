@@ -92,6 +92,7 @@ openvpn \
   --auth-nocache \
   --daemon \
   --log $overlay/var/log/openvpn \
+  --mute-replay-warnings \
   --script-security 2 \
   --up /etc/openvpn/up.sh \
   --down /etc/openvpn/down.sh \
@@ -149,7 +150,9 @@ tinyproxy -d -c $overlay/etc/tinyproxy/tinyproxy.conf &> $overlay/var/log/tinypr
   end
 
   set -q vpn_container || begin
-    if command -q alpine
+    if command -q docker
+      set -f vpn_container docker
+    else if command -q alpine
       set -f vpn_container alpine
     else if command -q colima
       set -f vpn_container colima
@@ -159,6 +162,75 @@ tinyproxy -d -c $overlay/etc/tinyproxy/tinyproxy.conf &> $overlay/var/log/tinypr
     end
   end
   vpn-$vpn_container $args
+end
+
+function vpn-docker -a action name
+  set -l args $argv[3..]
+  set -l indent sed 's/^/  /'
+
+  argparse -i v -- $args
+  if set -q _flag_v
+    set -f out /dev/stdout
+  else
+    set -f out /dev/null
+  end
+
+  argparse -i 'p/port=?' 'c/cpu=?' 'm/memory=?' -- $args
+  set -l port 8888  && set -q _flag_port   && set port $_flag_port
+  set -l cpu 1      && set -q _flag_cpu    && set cpu $_flag_cpu
+  set -l memory 128 && set -q _flag_memory && set memory $_flag_memory
+
+  set -l image alpine:latest
+
+  switch "$action"
+    case status
+      set -l running (command docker container inspect -f '{{.State.Running}}' $name 2>&1)
+      switch "$running"
+        case true
+          echo Running
+        case false
+          echo Stopped
+        case \*
+          echo Missing
+      end
+    case connect
+      if test (vpn-docker status $name) = Running
+        vpn-docker disconnect $name $args
+      end
+      switch (vpn-docker status $name)
+        case Missing
+          echo Starting $name
+          command docker pull $image
+          command docker run \
+            --name $name \
+            --cpus $cpu \
+            --memory {$memory}000000 \
+            --volume ~/.local/state/vpn/$name:/mnt/$name \
+            --publish $port:8888 \
+            --device /dev/net/tun \
+            --cap-add NET_ADMIN \
+            --tty \
+            --detach \
+            $image
+          command docker exec $name apk add --update --no-cache openvpn tinyproxy nmap 2>&1 | $indent > $out
+        case Stopped
+          echo Starting $name
+          command docker start $name 2>&1 | $indent > $out
+      end
+      echo Starting tinyproxy
+      command docker exec $name /mnt/$name/etc/tinyproxy/run.sh $name 2>&1 | $indent > $out
+      echo Starting OpenVPN
+      command docker exec $name /mnt/$name/etc/openvpn/run.sh $name 2>&1 | $indent > $out
+      echo Resolving slow hosts
+      command docker exec $name /mnt/$name/etc/resolve/run.sh $name 2>&1 | $indent > $out
+      echo VPN is ready at http://localhost:$port
+    case disconnect
+      echo Disconnecting $name
+      command docker stop $name 2>&1 | $indent > $out
+    case delete
+      echo Deleting $name
+      command docker rm $name --force 2>&1 | $indent > $out
+  end
 end
 
 function vpn-alpine -a action name
@@ -222,6 +294,7 @@ function vpn-alpine -a action name
       command alpine exec $name -- /mnt/$name/etc/resolve/run.sh $name 2>&1 | $indent > $out
       echo Starting tinyproxy
       command alpine exec $name -- /mnt/$name/etc/tinyproxy/run.sh $name 2>&1 | $indent > $out
+      echo VPN is ready at http://localhost:$port
     case disconnect
       echo Disconnecting $name
       command alpine stop $name 2>&1 | $indent > $out
@@ -318,6 +391,7 @@ function vpn-colima -a action name
             --detach \
             $image
       end
+      echo VPN is ready at http://localhost:$port
     case disconnect
       echo vpn: Disconnecting $name
       switch "$vpn_runtime"

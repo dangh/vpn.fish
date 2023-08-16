@@ -4,6 +4,7 @@ function vpn -a action name
   if test -z "$argv" && test (count ~/.config/vpn/*/) -eq 1
     set -l name (path basename ~/.config/vpn/*/)
     vpn connect $name -v
+    return
   end
 
   test -n "$action" || begin
@@ -215,12 +216,12 @@ function vpn-alpine -a action name
           mknod /dev/net/tun c 10 200
         fi
       ' 2>&1 | $indent > $out
-      echo Starting tinyproxy
-      command alpine exec $name -- /mnt/$name/etc/tinyproxy/run.sh $name 2>&1 | $indent > $out
       echo Starting OpenVPN
       command alpine exec $name -- /mnt/$name/etc/openvpn/run.sh $name 2>&1 | $indent > $out
       echo Resolving slow hosts
       command alpine exec $name -- /mnt/$name/etc/resolve/run.sh $name 2>&1 | $indent > $out
+      echo Starting tinyproxy
+      command alpine exec $name -- /mnt/$name/etc/tinyproxy/run.sh $name 2>&1 | $indent > $out
     case disconnect
       echo Disconnecting $name
       command alpine stop $name 2>&1 | $indent > $out

@@ -226,7 +226,7 @@ function vpn-docker -a action name
       echo VPN is ready at http://localhost:$port
     case disconnect
       echo Disconnecting $name
-      command docker stop $name 2>&1 | $indent > $out
+      command docker kill $name 2>&1 | $indent > $out
     case delete
       echo Deleting $name
       command docker rm $name --force 2>&1 | $indent > $out

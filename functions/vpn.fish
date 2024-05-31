@@ -73,6 +73,7 @@ function vpn -a action name
             : >$overlay/var/log/openvpn
             : >$overlay/var/log/resolve
             : >$overlay/var/log/tinyproxy
+            : >$overlay/etc/resolve/hosts
             if test -f $config/tinyproxy.conf
                 cp $config/tinyproxy.conf $overlay/etc/tinyproxy/
             else

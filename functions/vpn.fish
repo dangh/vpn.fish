@@ -267,6 +267,7 @@ function vpn-alpine -a action name
                 case Missing
                     echo Creating $name
                     command alpine launch \
+                        --ssh 8022 \
                         --name $name \
                         --cpu $cpu \
                         --disk $disk \

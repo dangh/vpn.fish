@@ -1,16 +1,14 @@
 function vpn -a action name
     set -l args $argv
 
-    if test -z "$argv" && test (count ~/.config/vpn/*/) -eq 1
-        set -l name (path basename ~/.config/vpn/*/)
-        vpn connect $name -v
-        return
+    if test -z "$action"
+        set action connect
     end
 
-    test -n "$action" || begin
-        echo action is required
-        return 1
+    if test -z "$name" && test (count ~/.config/vpn/*/) -eq 1
+        set name (path basename ~/.config/vpn/*/)
     end
+
     test -n "$name" || begin
         echo name is required
         return 1
@@ -162,7 +160,8 @@ tinyproxy -d -c $overlay/etc/tinyproxy/tinyproxy.conf &> $overlay/var/log/tinypr
             return 1
         end
     end
-    vpn-$vpn_container $args
+    vpn-$vpn_container $action $name || return 1
+    emit vpn $action $name
 end
 
 function vpn-docker -a action name

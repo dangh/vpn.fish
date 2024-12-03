@@ -19,6 +19,7 @@ function vpn -a action name
     set -l cpu 1 && set -q _flag_cpu && set cpu $_flag_cpu
     set -l disk 128M && set -q _flag_disk && set disk $_flag_disk
     set -l memory 256 && set -q _flag_memory && set memory $_flag_memory
+    set -l url http://localhost:$port
 
     # Directory structure for profile `nasa'
     : '
@@ -39,7 +40,7 @@ function vpn -a action name
     │   │   ├── hosts
     │   │   └── run.sh
     │   └── tinyproxy
-    │   │   ├── run.sh
+    │       ├── run.sh
     │       └── tinyproxy.conf
     └── var
         └── log
@@ -161,7 +162,7 @@ tinyproxy -d -c $overlay/etc/tinyproxy/tinyproxy.conf &> $overlay/var/log/tinypr
         end
     end
     vpn-$vpn_container $action $name || return 1
-    emit vpn $action $name
+    emit vpn $action $name $url
 end
 
 function vpn-docker -a action name

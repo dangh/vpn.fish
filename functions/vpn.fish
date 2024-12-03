@@ -24,29 +24,29 @@ function vpn -a action name
     # Directory structure for profile `nasa'
     : '
     ~/.config/vpn/nasa
-    ├── config
-    ├── passwd
-    ├── domains
-    └── tinyproxy.conf
+    ├──╴config
+    ├──╴passwd
+    ├──╴domains
+    └──╴tinyproxy.conf
 
     ~/.local/state/vpn/nasa
-    ├── etc
-    │   ├── openvpn
-    │   │   ├── config
-    │   │   ├── passwd
-    │   │   └── run.sh
-    │   ├── resolve
-    │   │   ├── domains
-    │   │   ├── hosts
-    │   │   └── run.sh
-    │   └── tinyproxy
-    │       ├── run.sh
-    │       └── tinyproxy.conf
-    └── var
-        └── log
-            ├── openvpn
-            ├── resolve
-            └── tinyproxy
+    ├──╴etc
+    │   ├──╴openvpn
+    │   │   ├──╴config
+    │   │   ├──╴passwd
+    │   │   └──╴run.sh
+    │   ├──╴resolve
+    │   │   ├──╴domains
+    │   │   ├──╴hosts
+    │   │   └──╴run.sh
+    │   └──╴tinyproxy
+    │       ├──╴run.sh
+    │       └──╴tinyproxy.conf
+    └──╴var
+        └──╴log
+            ├──╴openvpn
+            ├──╴resolve
+            └──╴tinyproxy
     '
 
     set -l config ~/.config/vpn/$name
